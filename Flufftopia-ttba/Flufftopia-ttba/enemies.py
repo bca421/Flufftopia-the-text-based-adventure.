@@ -1,3 +1,4 @@
+#enemies.py is a module that contains a list of enemies with random names, health, strength, defense, and loot for Flufftopia.
 # Define a list of enemies with random names, health, strength, defense, and loot for Flufftopia.
 enemies = [
     {"name": "Dire Wolf", "health": 50, "strength": 10, "defense": 5, "loot": ["wolf pelt", "fang"]},

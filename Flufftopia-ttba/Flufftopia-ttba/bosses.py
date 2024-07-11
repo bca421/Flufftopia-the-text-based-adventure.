@@ -1,3 +1,5 @@
+# bosses.py is a module that contains a list of enemies with random names, health, strength, defense, and loot for Flufftopia.
+
 # Define a list of enemies with random names, health, strength, defense, and loot for Flufftopia.
 bosses = [
     {"name": "Rabid Dire Wolf", "health": 100, "strength": 20, "defense": 20, "loot": ["Rabid wolf pelt", "Bloody fang"]},

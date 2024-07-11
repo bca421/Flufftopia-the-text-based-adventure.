@@ -1,3 +1,4 @@
+# locations.py contains the definitions for the locations in the game, including their names, descriptions, and connections.
 # Define the descriptions for each location
 locations = {
     "village": {

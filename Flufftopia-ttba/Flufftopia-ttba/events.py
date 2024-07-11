@@ -1,3 +1,4 @@
+# events.py contains a dictionary of events and corresponding locations in the game.
 # Dictionary of events and corresponding locations
 events = {
     "village": [
@@ -13,6 +14,12 @@ events = {
         "You encounter a guardian statue named Golem that comes to life.",
         "You find an ancient scroll hidden in the rubble.",
         "You get trapped in a collapsing corridor."
+        "You find a huge beast guarding a treasure chest.",
+        "a guardian .",
+        "You encounter a ",
+        "a guardian .",
+        "You encounter a ",
+        "a guardian .",
     ],
     "fairy_glade": [
         "You meet a friendly fairy named Steve who offers you some fairy dust.",
