@@ -1,7 +1,8 @@
-# main.py
 from enemies import enemies
 from events import events
+from dev_privileges import grant_dev_privileges
 from locations import locations
+from bosses import bosses  # Added bosses import
 import random
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -12,20 +13,22 @@ from kivy.uix.progressbar import ProgressBar
 from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
-
+from kivy.uix.dropdown import DropDown
 
 class FlufftopiaApp(App):
     def build(self):
         self.player = self.player_setup()
         self.location_index = 0
         self.current_enemy = None
+        self.current_boss = None
+        self.unlocked_locations = ["village","enchanted_forest","ancient_ruins"]
 
         self.main_layout = BoxLayout(orientation='vertical')
 
         self.health_bar = ProgressBar(max=100, value=self.player['health'])
         self.main_layout.add_widget(self.health_bar)
 
-        self.info_label = Label(text="Welcome to Flufftopia!", size_hint_y=None, height=400)
+        self.info_label = Label(text="Welcome to Flufftopia!", size_hint_y=None, height=200)
         self.scroll_view = ScrollView(size_hint=(1, None), size=(400, 400))
         self.scroll_view.add_widget(self.info_label)
         self.main_layout.add_widget(self.scroll_view)
@@ -33,7 +36,7 @@ class FlufftopiaApp(App):
         self.inventory_label = Label(text="Inventory: " + ', '.join(self.player['inventory']))
         self.main_layout.add_widget(self.inventory_label)
 
-        button_layout = GridLayout(cols=5, size_hint_y=None, height=50)
+        button_layout = GridLayout(cols=6, size_hint_y=None, height=50)
         self.main_layout.add_widget(button_layout)
 
         self.next_button = Button(text="Next")
@@ -56,30 +59,53 @@ class FlufftopiaApp(App):
         self.run_button.bind(on_press=self.run_from_combat)
         button_layout.add_widget(self.run_button)
 
+        self.explore_button = Button(text="Explore")
+        self.explore_button.bind(on_press=self.explore_area)
+        button_layout.add_widget(self.explore_button)
+
         self.enable_combat_buttons(False)  # Disable combat buttons initially
 
-        self.name_input_popup()
+        self.class_selection_popup()
 
         return self.main_layout
 
-    def name_input_popup(self):
-        layout = BoxLayout(orientation='vertical')
-        self.name_input = TextInput(hint_text='Enter your name', size_hint=(1, 0.5), multiline=False)
-        submit_button = Button(text='Submit', size_hint=(1, 0.5))
-        submit_button.bind(on_press=self.set_player_name)
+    
 
-        layout.add_widget(self.name_input)
+    def class_selection_popup(self):
+        layout = BoxLayout(orientation='vertical')
+        classes = ['Warrior', 'Mage', 'Rogue']
+        dropdown = DropDown()
+
+        for cls in classes:
+            btn = Button(text=cls, size_hint_y=None, height=40)
+            btn.bind(on_release=lambda btn: dropdown.select(btn.text))
+            dropdown.add_widget(btn)
+
+        class_button = Button(text='Choose Class', size_hint=(1, 0.5))
+        class_button.bind(on_release=dropdown.open)
+        dropdown.bind(on_select=lambda instance, x: setattr(class_button, 'text', x))
+
+        submit_button = Button(text='Submit', size_hint=(1, 0.5))
+        submit_button.bind(on_press=lambda instance: self.set_player_class(class_button.text))
+
+        layout.add_widget(class_button)
         layout.add_widget(submit_button)
 
-        self.popup = Popup(title='Player Name', content=layout, size_hint=(0.5, 0.3), auto_dismiss=False)
+        self.popup = Popup(title='Choose Class', content=layout, size_hint=(0.5, 0.3), auto_dismiss=False)
         self.popup.open()
-        self.name_input.focus = True
 
-    def set_player_name(self, instance):
-        self.player['name'] = self.name_input.text.strip()
+    def set_player_class(self, player_class):
+        self.player['class'] = player_class
+        if player_class == 'Warrior':
+            self.player.update({'strength': 20, 'defense': 15, 'agility': 5, 'skills': ['Slash', 'Shield Bash']})
+        elif player_class == 'Mage':
+            self.player.update({'strength': 15, 'defense': 5, 'agility': 10, 'skills': ['Fireball', 'Heal']})
+        elif player_class == 'Rogue':
+            self.player.update({'strength': 10, 'defense': 10, 'agility': 15, 'skills': ['Backstab', 'Dodge']})
         self.popup.dismiss()
-        self.info_label.text = f"Welcome to Flufftopia, {self.player['name']}!"
-        self.grant_dev_privileges()
+        self.info_label.text = f"Welcome to Flufftopia, {self.player['name']} the {self.player['class']}!"
+        grant_dev_privileges(self)
+        self.game_intro()
 
     def game_intro(self):
         intro_text = (
@@ -95,59 +121,18 @@ class FlufftopiaApp(App):
     def player_setup(self):
         player = {
             "name": "Hero",
+            "class": "None",
             "health": 100,
-            "strength": random.randint(10, 20),
-            "defense": random.randint(5, 15),
-            "agility": random.randint(5, 15),
+            "strength": 10,
+            "defense": 5,
+            "agility": 5,
             "inventory": ["health potion"],
-            "quests": []
+            "quests": [],
+            "xp": 0,
+            "level": 1,
+            "skills": []
         }
         return player
-
-    def grant_dev_privileges(self):
-        if self.player['name'].lower() == "brian allen":
-            self.info_label.text += "\nDeveloper mode activated. You have full access to all functions."
-
-            dev_button_layout = GridLayout(cols=2, size_hint_y=None, height=100)
-            self.main_layout.add_widget(dev_button_layout)
-
-            test_combat_button = Button(text="Test Combat")
-            test_combat_button.bind(on_press=self.dev_test_combat)
-            dev_button_layout.add_widget(test_combat_button)
-
-            test_random_event_button = Button(text="Test Random Event")
-            test_random_event_button.bind(on_press=self.dev_test_random_event)
-            dev_button_layout.add_widget(test_random_event_button)
-
-            test_next_location_button = Button(text="Test Next Location")
-            test_next_location_button.bind(on_press=self.dev_test_next_location)
-            dev_button_layout.add_widget(test_next_location_button)
-
-            test_use_skill_button = Button(text="Test Use Skill")
-            test_use_skill_button.bind(on_press=self.dev_test_use_skill)
-            dev_button_layout.add_widget(test_use_skill_button)
-
-    def dev_test_combat(self, instance):
-        self.clear_screen()
-        self.current_enemy = random.choice(enemies)
-        self.info_label.text += f"\nTesting combat with {self.current_enemy['name']}."
-        self.enable_combat_buttons(True)
-
-    def dev_test_random_event(self, instance):
-        self.clear_screen()
-        location = random.choice(list(events.keys()))
-        self.info_label.text += f"\nTesting random event at {location.replace('_', ' ').title()}."
-        self.random_event(location)
-
-    def dev_test_next_location(self, instance):
-        self.clear_screen()
-        self.info_label.text += "\nTesting next location."
-        self.next_location(None)
-
-    def dev_test_use_skill(self, instance):
-        self.clear_screen()
-        self.info_label.text += "\nTesting use skill."
-        self.show_skill_popup(None)
 
     def clear_screen(self):
         self.info_label.text = ""
@@ -180,9 +165,9 @@ class FlufftopiaApp(App):
         self.info_label.text += f"\n{self.player['name']}'s Health: {self.player['health']}"
         self.info_label.text += f"\n{enemy['name']}'s Health: {enemy['health']}"
 
-        damage = max(0, self.player["strength"] - enemy["defense"] + random.randint(-5, 5))
-        enemy["health"] -= damage
-        self.info_label.text += f"\nYou attack the {enemy['name']} for {damage} damage!"
+        player_damage = max(0, self.player["strength"] - enemy["defense"] + random.randint(-5, 5))
+        enemy["health"] -= player_damage
+        self.info_label.text += f"\nYou attack the {enemy['name']} for {player_damage} damage!"
 
         if enemy["health"] <= 0:
             self.info_label.text += f"\nYou have defeated the {enemy['name']}!"
@@ -192,12 +177,13 @@ class FlufftopiaApp(App):
             self.info_label.text += f"\nYou found a {loot} on the {enemy['name']}!"
             self.enable_combat_buttons(False)
             self.proceed_if_enemy_defeated()
+            self.gain_xp(10)
             return
 
-        damage = max(0, enemy["strength"] - self.player["defense"] + random.randint(-5, 5))
-        self.player["health"] -= damage
+        enemy_damage = max(0, enemy["strength"] - self.player["defense"] + random.randint(-5, 5))
+        self.player["health"] -= enemy_damage
         self.health_bar.value = self.player["health"]
-        self.info_label.text += f"\nThe {enemy['name']} attacks you for {damage} damage!"
+        self.info_label.text += f"\nThe {enemy['name']} attacks you for {enemy_damage} damage!"
 
         self.check_player_health()
 
@@ -211,10 +197,10 @@ class FlufftopiaApp(App):
             self.info_label.text += "\nNo enemy to defend against."
 
     def enemy_attack(self, enemy):
-        damage = max(0, enemy["strength"] - self.player["defense"] + random.randint(-5, 5))
-        self.player["health"] -= damage
+        enemy_damage = max(0, enemy["strength"] - self.player["defense"] + random.randint(-5, 5))
+        self.player["health"] -= enemy_damage
         self.health_bar.value = self.player["health"]
-        self.info_label.text += f"\nThe {enemy['name']} attacks you for {damage} damage!"
+        self.info_label.text += f"\nThe {enemy['name']} attacks you for {enemy_damage} damage!"
         self.player["defense"] = int(self.player["defense"] / 2)
         self.check_player_health()
 
@@ -249,9 +235,10 @@ class FlufftopiaApp(App):
             popup_scroll.add_widget(grid_layout)
 
             for loc in locations.keys():
-                btn = Button(text=loc.replace('_', ' ').title(), size_hint_y=None, height=40)
-                btn.bind(on_press=lambda instance, loc=loc: self.select_location(loc))
-                grid_layout.add_widget(btn)
+                if loc in self.unlocked_locations:
+                    btn = Button(text=loc.replace('_', ' ').title(), size_hint_y=None, height=40)
+                    btn.bind(on_press=lambda instance, loc=loc: self.select_location(loc))
+                    grid_layout.add_widget(btn)
 
             popup_layout.add_widget(popup_scroll)
             self.location_popup = Popup(title="Choose Your Next Location", content=popup_layout, size_hint=(0.75, 0.75))
@@ -263,32 +250,61 @@ class FlufftopiaApp(App):
         self.random_event(location)
         self.location_popup.dismiss()
 
+    def explore_area(self, instance):  # Added explore area method
+        self.clear_screen()
+        if self.current_boss:
+            self.info_label.text += "\nYou must defeat the boss to explore further!"
+            return
+
+        location = self.unlocked_locations[self.location_index]
+        self.describe_location(location)
+        self.info_label.text += "\nYou explore the area and find something interesting."
+        self.random_event(location)
+
     def use_skill(self, skill, target, popup):
         self.clear_screen()
-        if skill == "fireball" or skill == "f":
+        if skill == "Slash" or skill == "s":
             damage = self.player["strength"] * 2 - target["defense"]
             target["health"] -= max(0, damage)
-            self.info_label.text += f"\nYou cast a fireball at {target['name']} for {damage} damage!"
-        elif skill == "heal" or skill == "h":
+            self.info_label.text += f"\nYou use Slash on {target['name']} for {damage} damage!"
+        elif skill == "Shield Bash" or skill == "sb":
+            damage = self.player["strength"] - target["defense"]
+            target["health"] -= max(0, damage)
+            self.player["defense"] += 5
+            self.info_label.text += f"\nYou use Shield Bash on {target['name']} for {damage} damage!"
+        elif skill == "Fireball" or skill == "f":
+            damage = self.player["strength"] * 2 - target["defense"]
+            target["health"] -= max(0, damage)
+            self.info_label.text += f"\nYou cast Fireball at {target['name']} for {damage} damage!"
+        elif skill == "Heal" or skill == "h":
             heal_amount = self.player["strength"] * 2
             self.player["health"] = min(100, self.player["health"] + heal_amount)
             self.health_bar.value = self.player["health"]
             self.info_label.text += f"\nYou heal yourself for {heal_amount} health points!"
+        elif skill == "Backstab" or skill == "b":
+            damage = self.player["strength"] * 3 - target["defense"]
+            target["health"] -= max(0, damage)
+            self.info_label.text += f"\nYou use Backstab on {target['name']} for {damage} damage!"
+        elif skill == "Dodge" or skill == "d":
+            self.player["agility"] += 10
+            self.info_label.text += f"\nYou use Dodge and increase your agility!"
         popup.dismiss()
         self.check_player_health()
         self.proceed_if_enemy_defeated()
 
     def show_skill_popup(self, instance):
         layout = BoxLayout(orientation='vertical')
-        fireball_button = Button(text="Fireball", size_hint=(1, 0.5))
-        heal_button = Button(text="Heal", size_hint=(1, 0.5))
+        skill_buttons = []
+
+        for skill in self.player["skills"]:
+            btn = Button(text=skill, size_hint=(1, 0.5))
+            btn.bind(on_press=lambda x, s=skill: self.use_skill(s, self.current_enemy if s not in ["Heal", "Dodge"] else self.player, popup))
+            skill_buttons.append(btn)
+
+        for btn in skill_buttons:
+            layout.add_widget(btn)
 
         popup = Popup(title="Choose a Skill", content=layout, size_hint=(0.5, 0.3))
-        fireball_button.bind(on_press=lambda x: self.use_skill("fireball", self.current_enemy, popup))
-        heal_button.bind(on_press=lambda x: self.use_skill("heal", self.player, popup))
-        layout.add_widget(fireball_button)
-        layout.add_widget(heal_button)
-
         popup.open()
 
     def attack_enemy(self, instance):
@@ -316,6 +332,52 @@ class FlufftopiaApp(App):
             f"Strength: {enemy['strength']}\n"
             f"Defense: {enemy['defense']}\n"
         )
+
+    def gain_xp(self, amount):
+        self.player["xp"] += amount
+        self.info_label.text += f"\nYou gained {amount} XP."
+        if self.player["xp"] >= self.player["level"] * 10:
+            self.level_up()
+
+    def level_up(self):
+        self.player["level"] += 1
+        self.player["xp"] = 0
+        self.player["strength"] += 5
+        self.player["defense"] += 5
+        self.player["agility"] += 5
+        self.info_label.text += f"\nCongratulations! You leveled up to level {self.player['level']}."
+        self.info_label.text += (
+            f"\nNew stats:\n"
+            f"Strength: {self.player['strength']}\n"
+            f"Defense: {self.player['defense']}\n"
+            f"Agility: {self.player['agility']}"
+        )
+        self.unlock_new_skill()
+
+    def unlock_new_skill(self):
+        new_skills = {
+            "Warrior": ["Power Strike", "Battle Cry"],
+            "Mage": ["Lightning Bolt", "Mana Shield"],
+            "Rogue": ["Shadow Step", "Poison Blade"]
+        }
+        available_skills = new_skills[self.player["class"]]
+        new_skill = random.choice(available_skills)
+        self.player["skills"].append(new_skill)
+        self.info_label.text += f"\nYou unlocked a new skill: {new_skill}!"
+
+    def unlock_new_location(self):
+        new_locations = {
+
+            "level_2": ["ancient_ruins",],
+            "level_3": ["enchanted_forest"],
+            "level_4": ["hidden_village"],
+        }
+        current_level = f"level_{self.player['level']}"
+        if current_level in new_locations:
+            for loc in new_locations[current_level]:
+                if loc not in self.unlocked_locations:
+                    self.unlocked_locations.append(loc)
+                    self.info_label.text += f"\nYou unlocked a new location: {loc.replace('_', ' ').title()}!"
 
 if __name__ == "__main__":
     FlufftopiaApp().run()
