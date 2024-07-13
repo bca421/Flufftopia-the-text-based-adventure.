@@ -1,4 +1,3 @@
-# Define the descriptions for each location
 locations = {
     "village": {
         "description": "A quaint village with friendly inhabitants and a bustling marketplace."
