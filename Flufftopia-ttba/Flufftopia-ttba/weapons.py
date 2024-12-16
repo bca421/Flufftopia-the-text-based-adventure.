@@ -1,4 +1,6 @@
-# Define a list of enemies with random names, health, strength, defense, and loot for Flufftopia.
+# weapons.py is a file that contains a list of weapons for the game Flufftopia.
+
+# Define a list of weapons with random names, buffs, and special effects for Flufftopia.
 Rogue_weapons = [
     {"name": "Dirk", "Damage": 15, "strength": +10, "defense": +5, "buff": ["critical_hit +2", "Strength +2"]},
     {"name": "Dagger", "Damage": 20, "strength": +15, "defense": +2, "buff": ["Health +5", "critical +4"]},
@@ -27,7 +29,6 @@ Warrior_weapons[
     {"name": "Stone Golem", "health": 80, "strength": 18, "defense": 9, "loot": ["golem core", "rock shard"]},
     {"name": "Hell Demon", "health": 90, "strength": 19, "defense": 8, "loot": ["demon horn", "hellfire"]},
     {"name": "Blood Vampire", "health": 60, "strength": 15, "defense": 6, "loot": ["vampire fang", "blood vial"]},
-    
 ]    
     
 Special_weapons[   
